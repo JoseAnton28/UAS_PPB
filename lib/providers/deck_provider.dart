@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/card_model.dart';
 import '../services/supabase_service.dart';
+import 'auth_provider.dart';
 
 class DeckProvider extends ChangeNotifier {
   List<Deck> _decks = [];
@@ -148,9 +150,16 @@ class DeckProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> saveDeck() async {
+  Future<bool> saveDeck(BuildContext context) async {
     if (_currentDeck == null) {
       _errorMessage = 'No deck to save';
+      notifyListeners();
+      return false;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+    if (!authProvider.isAuthenticated) {
+      _errorMessage = 'You must be logged in to save decks.';
       notifyListeners();
       return false;
     }
@@ -175,7 +184,7 @@ class DeckProvider extends ChangeNotifier {
       await loadDecks();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = 'Failed to save deck: $e. Check if you are logged in.';
       print('❌ Save deck error: $e');
       notifyListeners();
       return false;

@@ -16,11 +16,26 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void _initAuth() {
-    _currentUser = Supabase.instance.client.auth.currentUser;
+    // Get current session
+    final session = Supabase.instance.client.auth.currentSession;
+    _currentUser = session?.user;
+
+    if (_currentUser != null) {
+      print('✅ Auth: User session restored - ${_currentUser!.email}');
+    } else {
+      print('⚠️ Auth: No active session');
+    }
 
     // Listen to auth state changes
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
       _currentUser = data.session?.user;
+
+      print('🔐 Auth state changed: $event');
+      if (_currentUser != null) {
+        print('✅ User: ${_currentUser!.email}');
+      }
+
       notifyListeners();
     });
   }
@@ -37,14 +52,14 @@ class AuthProvider extends ChangeNotifier {
         data: {'display_name': displayName},
       );
 
-      if (response.user != null) {
+      if (response.session != null) {  // Changed to check session, not user (for confirmation flow)
         _currentUser = response.user;
         _isLoading = false;
         notifyListeners();
         return true;
       }
 
-      _errorMessage = 'Sign up failed';
+      _errorMessage = 'Sign up failed. Check if email confirmation is required.';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -67,14 +82,14 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
 
-      if (response.user != null) {
+      if (response.session != null) {  // Check session
         _currentUser = response.user;
         _isLoading = false;
         notifyListeners();
         return true;
       }
 
-      _errorMessage = 'Sign in failed';
+      _errorMessage = 'Sign in failed. Check credentials or confirm email.';
       _isLoading = false;
       notifyListeners();
       return false;
