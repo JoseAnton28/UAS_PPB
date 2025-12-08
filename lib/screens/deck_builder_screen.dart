@@ -29,14 +29,14 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
   void _loadCards() {
     final cardProvider = context.read<CardProvider>();
     if (cardProvider.allCards.isEmpty) {
-      cardProvider.loadAllCards();
+      cardProvider.loadAllCards().then((_) => _filterCardsByTab());
     } else {
       _filterCardsByTab();
     }
   }
 
   void _onTabChanged() {
-    if (_tabController.indexIsChanging) {
+    if (!_tabController.indexIsChanging) {
       _filterCardsByTab();
     }
   }
@@ -47,20 +47,26 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
 
     setState(() {
       if (_tabController.index == 1) {
-        // Extra Deck tab - hanya Fusion, Synchro, Xyz, Link
-        _filteredCards = allCards.where((card) => _isExtraDeckCard(card)).toList();
+        // Extra Deck
+        _filteredCards =
+            allCards.where((card) => _isExtraDeckCard(card)).toList();
+      } else if (_tabController.index == 0) {
+        // Main Deck
+        _filteredCards =
+            allCards.where((card) => !_isExtraDeckCard(card)).toList();
       } else {
-        // Main Deck & Side Deck tabs - tampilkan SEMUA kartu
+        // Side Deck – semua kartu
         _filteredCards = allCards;
       }
     });
   }
 
   bool _isExtraDeckCard(YugiohCard card) {
-    return card.type.contains('Fusion') ||
-        card.type.contains('Synchro') ||
-        card.type.contains('Xyz') ||
-        card.type.contains('Link');
+    final type = card.type.toLowerCase();
+    return type.contains('fusion') ||
+        type.contains('synchro') ||
+        type.contains('xyz') ||
+        type.contains('link');
   }
 
   @override
@@ -96,11 +102,12 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
           ),
           body: Row(
             children: [
-              // Card list section
+              // ==== Kiri: Daftar kartu ====
               Expanded(
                 flex: 2,
                 child: Column(
                   children: [
+                    // Search bar
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextField(
@@ -118,14 +125,17 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                         },
                       ),
                     ),
-                    // Tab info
+                    // Info tab
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      color: Colors.purple.withOpacity(0.2),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
+                      color: Colors.purple.withAlpha(50),
                       child: Row(
                         children: [
                           Icon(
-                            _tabController.index == 1 ? Icons.stars : Icons.style,
+                            _tabController.index == 1
+                                ? Icons.stars
+                                : Icons.style,
                             size: 16,
                           ),
                           const SizedBox(width: 8),
@@ -134,7 +144,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                               _tabController.index == 1
                                   ? 'Extra Deck: Fusion, Synchro, Xyz, Link only'
                                   : _tabController.index == 0
-                                  ? 'Main Deck: All cards available'
+                                  ? 'Main Deck: Monsters, Spells, Traps'
                                   : 'Side Deck: All cards available',
                               style: const TextStyle(fontSize: 12),
                             ),
@@ -142,13 +152,14 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                         ],
                       ),
                     ),
+                    // List kartu
                     Expanded(
                       child: Consumer<CardProvider>(
                         builder: (context, cardProvider, child) {
                           if (cardProvider.isLoading) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                                child: CircularProgressIndicator());
                           }
-
                           return ListView.builder(
                             itemCount: _filteredCards.length,
                             itemBuilder: (context, index) {
@@ -163,7 +174,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                 ),
               ),
 
-              // Deck view section
+              // ==== Kanan: Deck view ====
               Expanded(
                 flex: 3,
                 child: Container(
@@ -182,11 +193,12 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
           ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.all(8),
-            color: deck.isValid ? Colors.green.shade900 : Colors.red.shade900,
+            color:
+            deck.isValid ? Colors.green.shade900 : Colors.red.shade900,
             child: Text(
               deck.isValid
-                  ? 'Deck is valid! ✓'
-                  : 'Deck must have 40-60 cards in main deck',
+                  ? 'Deck is valid!'
+                  : 'Main Deck must have 40-60 cards',
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -196,91 +208,11 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
     );
   }
 
-  Future<void> _saveDeck(BuildContext context, DeckProvider deckProvider) async {
-    final deck = deckProvider.currentDeck;
+  // -------------------------------------------------
+  // Widget-widget pendukung
+  // -------------------------------------------------
 
-    if (deck == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No deck to save'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // Validasi deck
-    if (!deck.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Deck must have 40-60 cards in Main Deck'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    // Show loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-
-    final success = await deckProvider.saveDeck();
-
-    if (!context.mounted) return;
-    Navigator.pop(context); // Close loading
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✓ Deck saved successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      Navigator.pop(context); // Back to deck list
-    } else {
-      // Show detailed error
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Save Failed'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Failed to save deck.'),
-                const SizedBox(height: 8),
-                const Text('Error:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(
-                  deckProvider.errorMessage,
-                  style: const TextStyle(fontSize: 12, color: Colors.red),
-                ),
-                const SizedBox(height: 16),
-                const Text('Possible solutions:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const Text('• Check your internet connection'),
-                const Text('• Make sure you are logged in'),
-                const Text('• Try logging out and back in'),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  Widget _buildCardListItem(YugiohCard card, DeckProvider deckProvider) {
+  Widget _buildCardListItem(YugiohCard card, DeckProvider provider) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ListTile(
@@ -288,33 +220,24 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
           imageUrl: card.smallImageUrl,
           width: 40,
           fit: BoxFit.cover,
-          placeholder: (context, url) => const SizedBox(
+          placeholder: (_, __) => const SizedBox(
             width: 40,
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
-          errorWidget: (context, url, error) => const Icon(Icons.error),
         ),
-        title: Text(
-          card.name,
-          style: const TextStyle(fontSize: 12),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          card.type,
-          style: const TextStyle(fontSize: 10),
-          maxLines: 1,
-        ),
+        title: Text(card.name,
+            style: const TextStyle(fontSize: 13), maxLines: 1),
+        subtitle:
+        Text(card.type, style: const TextStyle(fontSize: 10), maxLines: 1),
         trailing: IconButton(
           icon: const Icon(Icons.add_circle, color: Colors.green),
           onPressed: () {
-            // Add to current tab WITHOUT snackbar
             if (_tabController.index == 0) {
-              deckProvider.addCardToMainDeck(card);
+              provider.addCardToMainDeck(card);
             } else if (_tabController.index == 1) {
-              deckProvider.addCardToExtraDeck(card);
+              provider.addCardToExtraDeck(card);
             } else {
-              deckProvider.addCardToSideDeck(card);
+              provider.addCardToSideDeck(card);
             }
           },
         ),
@@ -323,10 +246,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
   }
 
   Widget _buildDeckSection(
-      List<DeckCard> cards,
-      DeckProvider provider,
-      String deckType,
-      ) {
+      List<DeckCard> cards, DeckProvider provider, String deckType) {
     if (cards.isEmpty) {
       return Center(
         child: Column(
@@ -338,16 +258,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
               color: Colors.grey,
             ),
             const SizedBox(height: 16),
-            Text(
-              'No cards in ${deckType == 'main' ? 'Main' : deckType == 'extra' ? 'Extra' : 'Side'} Deck',
-              style: const TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add cards from the list on the left',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
+            Text('No cards in ${deckType == 'main' ? 'Main' : deckType == 'extra' ? 'Extra' : 'Side'} Deck'),
           ],
         ),
       );
@@ -370,18 +281,13 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
   }
 
   Widget _buildDeckCardItem(
-      DeckCard deckCard,
-      DeckProvider provider,
-      String deckType,
-      ) {
+      DeckCard deckCard, DeckProvider provider, String deckType) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
           InkWell(
-            onTap: () {
-              _showCardOptions(deckCard, provider, deckType);
-            },
+            onTap: () => _showCardOptions(deckCard, provider, deckType),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -389,7 +295,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                   child: CachedNetworkImage(
                     imageUrl: deckCard.card.smallImageUrl,
                     fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => const Icon(Icons.error),
+                    errorWidget: (_, __, ___) => const Icon(Icons.error),
                   ),
                 ),
                 if (deckCard.quantity > 1)
@@ -402,6 +308,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -417,7 +324,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
               child: IconButton(
                 padding: EdgeInsets.zero,
                 iconSize: 16,
-                icon: const Icon(Icons.close),
+                icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
                   if (deckType == 'main') {
                     provider.removeCardFromMainDeck(deckCard.card);
@@ -436,13 +343,10 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
   }
 
   void _showCardOptions(
-      DeckCard deckCard,
-      DeckProvider provider,
-      String deckType,
-      ) {
+      DeckCard deckCard, DeckProvider provider, String deckType) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Padding(
+      builder: (_) => Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -479,6 +383,57 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
         ),
       ),
     );
+  }
+
+  // -------------------------------------------------
+  // Save Deck
+  // -------------------------------------------------
+  Future<void> _saveDeck(BuildContext context, DeckProvider deckProvider) async {
+    final deck = deckProvider.currentDeck!;
+    if (!deck.isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Deck must have 40-60 cards in Main Deck'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final success = await deckProvider.saveDeck(context);
+
+    if (!context.mounted) return;
+    Navigator.pop(context); // tutup loading
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Deck saved successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context); // kembali ke daftar deck
+    } else {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Save Failed'),
+          content: Text(deckProvider.errorMessage.isNotEmpty
+              ? deckProvider.errorMessage
+              : 'Unknown error'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context), child: const Text('OK')),
+          ],
+        ),
+      );
+    }
   }
 
   @override

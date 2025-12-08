@@ -24,20 +24,26 @@ Future<void> _testDatabaseAccess() async {
   try {
     print('🔍 Testing database access...');
 
-    final user = SupabaseService.client.auth.currentUser;
-    if (user != null) {
-      print('✅ User is logged in: ${user.email}');
-      print('📝 User ID: ${user.id}');
+    final session = SupabaseService.client.auth.currentSession;
+    if (session != null) {
+      print('✅ Session found!');
+      print('📧 Email: ${session.user.email}');
+      print('📝 User ID: ${session.user.id}');
+      print('⏰ Expires at: ${session.expiresAt}');
 
       // Test query to decks table
-      final response = await SupabaseService.client
-          .from('decks')
-          .select()
-          .limit(1);
+      try {
+        final response = await SupabaseService.client
+            .from('decks')
+            .select()
+            .limit(1);
 
-      print('✅ Database access OK! Found ${(response as List).length} decks');
+        print('✅ Database access OK! Found ${(response as List).length} decks');
+      } catch (e) {
+        print('❌ Database query error: $e');
+      }
     } else {
-      print('⚠️ No user logged in yet');
+      print('⚠️ No active session - User needs to login');
     }
   } catch (e) {
     print('❌ Database access error: $e');

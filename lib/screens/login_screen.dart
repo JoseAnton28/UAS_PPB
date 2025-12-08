@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
@@ -214,16 +215,27 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
+
+      print('🔐 Attempting login: ${_emailController.text}');
+
       final success = await authProvider.signIn(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
       if (success && context.mounted) {
+        print('✅ Login successful, navigating to home...');
+
+        // Verify session before navigating
+        final user = Supabase.instance.client.auth.currentUser;
+        print('📝 Current user: ${user?.email}');
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
+      } else {
+        print('❌ Login failed');
       }
     }
   }
