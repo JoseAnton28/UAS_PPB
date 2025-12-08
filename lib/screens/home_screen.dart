@@ -5,6 +5,7 @@ import 'card_search_screen.dart';
 import 'deck_list_screen.dart';
 import 'duel_simulator_screen.dart';
 import 'match_history_screen.dart';
+import 'banlist_screen.dart'; // TAMBAHAN: Banlist Screen
 import 'login_screen.dart'; // Pastikan import ini ada
 
 class HomeScreen extends StatelessWidget {
@@ -142,6 +143,22 @@ class HomeScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const MatchHistoryScreen()),
+              ),
+            ),
+            // INI YANG BARU DITAMBAHKAN: BANLIST
+            _buildMenuCard(
+              context,
+              title: 'Banlist',
+              icon: Icons.gavel,
+              color: Colors.purple,
+              gradient: const LinearGradient(
+                colors: [Colors.purple, Colors.deepPurple],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BanlistScreen()),
               ),
             ),
           ],

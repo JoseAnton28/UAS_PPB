@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class YugiohCard {
   final int id;
   final String name;
@@ -11,6 +13,9 @@ class YugiohCard {
   final List<CardImage> cardImages;
   final String? archetype;
 
+  // TAMBAHAN BARU: Untuk menyimpan status banlist (Forbidden, Limited, dll)
+  final Map<String, dynamic>? banlistInfo;
+
   YugiohCard({
     required this.id,
     required this.name,
@@ -23,6 +28,7 @@ class YugiohCard {
     this.attribute,
     required this.cardImages,
     this.archetype,
+    this.banlistInfo, // TAMBAHAN
   });
 
   factory YugiohCard.fromJson(Map<String, dynamic> json) {
@@ -40,6 +46,7 @@ class YugiohCard {
           .map((img) => CardImage.fromJson(img))
           .toList(),
       archetype: json['archetype'],
+      banlistInfo: json['banlist_info'] as Map<String, dynamic>?, // TAMBAHAN INI PENTING!
     );
   }
 
@@ -60,6 +67,7 @@ class YugiohCard {
         'image_url': img.imageUrl,
         'image_url_small': img.imageUrlSmall,
       }).toList(),
+      'banlist_info': banlistInfo, // Supaya bisa disimpan juga
     };
   }
 
@@ -102,7 +110,7 @@ class DeckCard {
 }
 
 class Deck {
-  dynamic id; // Support both int (SQLite) and String (Supabase UUID)
+  dynamic id;
   String name;
   List<DeckCard> mainDeck;
   List<DeckCard> extraDeck;
@@ -140,7 +148,7 @@ class Deck {
 }
 
 class MatchHistory {
-  dynamic id; // Support both int (SQLite) and String (Supabase UUID)
+  dynamic id;
   String player1Name;
   String player2Name;
   int player1LP;

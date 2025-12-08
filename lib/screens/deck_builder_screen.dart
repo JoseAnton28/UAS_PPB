@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/deck_provider.dart';
 import '../providers/card_provider.dart';
+import '../providers/banlist_provider.dart';
 import '../models/card_model.dart';
 
 class DeckBuilderScreen extends StatefulWidget {
@@ -42,20 +43,13 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
   }
 
   void _filterCardsByTab() {
-    final cardProvider = context.read<CardProvider>();
-    final allCards = cardProvider.searchResults;
-
+    final allCards = context.read<CardProvider>().searchResults;
     setState(() {
       if (_tabController.index == 1) {
-        // Extra Deck
-        _filteredCards =
-            allCards.where((card) => _isExtraDeckCard(card)).toList();
+        _filteredCards = allCards.where((c) => _isExtraDeckCard(c)).toList();
       } else if (_tabController.index == 0) {
-        // Main Deck
-        _filteredCards =
-            allCards.where((card) => !_isExtraDeckCard(card)).toList();
+        _filteredCards = allCards.where((c) => !_isExtraDeckCard(c)).toList();
       } else {
-        // Side Deck – semua kartu
         _filteredCards = allCards;
       }
     });
@@ -74,7 +68,6 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
     return Consumer<DeckProvider>(
       builder: (context, deckProvider, child) {
         final deck = deckProvider.currentDeck;
-
         if (deck == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Deck Builder')),
@@ -86,10 +79,17 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
           appBar: AppBar(
             title: Text(deck.name),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.save),
-                onPressed: () => _saveDeck(context, deckProvider),
+              DropdownButton<String>(
+                value: deckProvider.selectedBanlist,
+                dropdownColor: Colors.grey[900],
+                items: const [
+                  DropdownMenuItem(value: 'none', child: Text('No Banlist')),
+                  DropdownMenuItem(value: 'tcg', child: Text('TCG Banlist')),
+                  DropdownMenuItem(value: 'ocg', child: Text('OCG Banlist')),
+                ],
+                onChanged: (v) => v != null ? deckProvider.setBanlistFormat(v) : null,
               ),
+              IconButton(icon: const Icon(Icons.save), onPressed: () => _saveDeck(context, deckProvider)),
             ],
             bottom: TabBar(
               controller: _tabController,
@@ -102,166 +102,78 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
           ),
           body: Row(
             children: [
-              // ==== Kiri: Daftar kartu ====
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    // Search bar
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search cards...',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          context.read<CardProvider>().filterLocalCards(value);
-                          _filterCardsByTab();
-                        },
-                      ),
-                    ),
-                    // Info tab
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 16),
-                      color: Colors.purple.withAlpha(50),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _tabController.index == 1
-                                ? Icons.stars
-                                : Icons.style,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _tabController.index == 1
-                                  ? 'Extra Deck: Fusion, Synchro, Xyz, Link only'
-                                  : _tabController.index == 0
-                                  ? 'Main Deck: Monsters, Spells, Traps'
-                                  : 'Side Deck: All cards available',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // List kartu
-                    Expanded(
-                      child: Consumer<CardProvider>(
-                        builder: (context, cardProvider, child) {
-                          if (cardProvider.isLoading) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          }
-                          return ListView.builder(
-                            itemCount: _filteredCards.length,
-                            itemBuilder: (context, index) {
-                              final card = _filteredCards[index];
-                              return _buildCardListItem(card, deckProvider);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ==== Kanan: Deck view ====
-              Expanded(
-                flex: 3,
-                child: Container(
-                  color: const Color(0xFF16213e),
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildDeckSection(deck.mainDeck, deckProvider, 'main'),
-                      _buildDeckSection(deck.extraDeck, deckProvider, 'extra'),
-                      _buildDeckSection(deck.sideDeck, deckProvider, 'side'),
-                    ],
-                  ),
-                ),
-              ),
+              // KIRI: LIST PENCARIAN — TULISAN DI BAWAH TANDA + SUDAH DIHAPUS
+              Expanded(flex: 2, child: Column(children: [
+                Padding(padding: const EdgeInsets.all(8.0), child: TextField(controller: _searchController, decoration: InputDecoration(hintText: 'Search cards...', prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))), onChanged: (v) {
+                  context.read<CardProvider>().filterLocalCards(v);
+                  _filterCardsByTab();
+                })),
+                Container(padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), color: Colors.purple.withAlpha(50), child: Row(children: [
+                  Icon(_tabController.index == 1 ? Icons.stars : Icons.style, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(_tabController.index == 1 ? 'Extra Deck only' : _tabController.index == 0 ? 'Main Deck' : 'Side Deck', style: const TextStyle(fontSize: 12))),
+                ])),
+                Expanded(child: Consumer<CardProvider>(builder: (context, cp, _) {
+                  if (cp.isLoading) return const Center(child: CircularProgressIndicator());
+                  return ListView.builder(itemCount: _filteredCards.length, itemBuilder: (_, i) => _buildCardListItem(_filteredCards[i], deckProvider));
+                })),
+              ])),
+              // KANAN: DECK — NAMA KARTU SUDAH DIHAPUS
+              Expanded(flex: 3, child: Container(color: const Color(0xFF16213e), child: TabBarView(controller: _tabController, children: [
+                _buildDeckSection(deck.mainDeck, deckProvider, 'main'),
+                _buildDeckSection(deck.extraDeck, deckProvider, 'extra'),
+                _buildDeckSection(deck.sideDeck, deckProvider, 'side'),
+              ]))),
             ],
           ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.all(8),
-            color:
-            deck.isValid ? Colors.green.shade900 : Colors.red.shade900,
-            child: Text(
-              deck.isValid
-                  ? 'Deck is valid!'
-                  : 'Main Deck must have 40-60 cards',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            color: deck.isValid ? Colors.green.shade900 : Colors.red.shade900,
+            child: Text(deck.isValid ? 'Deck is valid!' : 'Main Deck must have 40-60 cards', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         );
       },
     );
   }
 
-  // -------------------------------------------------
-  // Widget-widget pendukung
-  // -------------------------------------------------
-
+  // LIST PENCARIAN: TULISAN DI BAWAH TANDA + SUDAH DIHAPUS
   Widget _buildCardListItem(YugiohCard card, DeckProvider provider) {
+    final banStatus = provider.selectedBanlist != 'none'
+        ? context.read<BanlistProvider>().getStatus(card)
+        : 'unlimited';
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ListTile(
-        leading: CachedNetworkImage(
-          imageUrl: card.smallImageUrl,
-          width: 40,
-          fit: BoxFit.cover,
-          placeholder: (_, __) => const SizedBox(
-            width: 40,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
+        leading: Stack(
+          children: [
+            CachedNetworkImage(imageUrl: card.smallImageUrl, width: 40),
+            if (banStatus == 'forbidden')
+              const Positioned(top: 0, right: 0, child: CircleAvatar(radius: 9, backgroundColor: Colors.red, child: Text('X', style: TextStyle(fontSize: 10, color: Colors.white)))),
+            if (banStatus == 'limited')
+              const Positioned(top: 0, right: 0, child: CircleAvatar(radius: 9, backgroundColor: Colors.orange, child: Text('1', style: TextStyle(fontSize: 10)))),
+            if (banStatus == 'semi_limited')
+              const Positioned(top: 0, right: 0, child: CircleAvatar(radius: 9, backgroundColor: Colors.yellow, child: Text('2', style: TextStyle(fontSize: 10)))),
+          ],
         ),
-        title: Text(card.name,
-            style: const TextStyle(fontSize: 13), maxLines: 1),
-        subtitle:
-        Text(card.type, style: const TextStyle(fontSize: 10), maxLines: 1),
+        // NAMA KARTU TETAP ADA (penting buat cari)
+        title: Text(card.name, style: const TextStyle(fontSize: 13)),
+        // TULISAN DI BAWAH TANDA + SUDAH DIHAPUS
         trailing: IconButton(
-          icon: const Icon(Icons.add_circle, color: Colors.green),
+          icon: const Icon(Icons.add_circle, color: Colors.green, size: 32),
           onPressed: () {
-            if (_tabController.index == 0) {
-              provider.addCardToMainDeck(card);
-            } else if (_tabController.index == 1) {
-              provider.addCardToExtraDeck(card);
-            } else {
-              provider.addCardToSideDeck(card);
-            }
+            if (_tabController.index == 0) provider.addCardToMainDeck(card, context);
+            else if (_tabController.index == 1) provider.addCardToExtraDeck(card, context);
+            else provider.addCardToSideDeck(card, context);
           },
         ),
       ),
     );
   }
 
-  Widget _buildDeckSection(
-      List<DeckCard> cards, DeckProvider provider, String deckType) {
+  Widget _buildDeckSection(List<DeckCard> cards, DeckProvider provider, String deckType) {
     if (cards.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              deckType == 'extra' ? Icons.stars : Icons.style,
-              size: 64,
-              color: Colors.grey,
-            ),
-            const SizedBox(height: 16),
-            Text('No cards in ${deckType == 'main' ? 'Main' : deckType == 'extra' ? 'Extra' : 'Side'} Deck'),
-          ],
-        ),
-      );
+      return Center(child: Text('No cards in $deckType Deck'));
     }
 
     return GridView.builder(
@@ -273,48 +185,58 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
         mainAxisSpacing: 8,
       ),
       itemCount: cards.length,
-      itemBuilder: (context, index) {
-        final deckCard = cards[index];
-        return _buildDeckCardItem(deckCard, provider, deckType);
-      },
+      itemBuilder: (_, i) => _buildDeckCardItem(cards[i], provider, deckType),
     );
   }
 
-  Widget _buildDeckCardItem(
-      DeckCard deckCard, DeckProvider provider, String deckType) {
+  // DECK CARD: NAMA KARTU SUDAH DIHAPUS
+  Widget _buildDeckCardItem(DeckCard dc, DeckProvider provider, String deckType) {
+    final banStatus = provider.selectedBanlist != 'none'
+        ? context.read<BanlistProvider>().getStatus(dc.card)
+        : 'unlimited';
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
           InkWell(
-            onTap: () => _showCardOptions(deckCard, provider, deckType),
+            onTap: () => _showCardOptions(dc, provider, deckType),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
                   child: CachedNetworkImage(
-                    imageUrl: deckCard.card.smallImageUrl,
+                    imageUrl: dc.card.smallImageUrl,
                     fit: BoxFit.cover,
                     errorWidget: (_, __, ___) => const Icon(Icons.error),
                   ),
                 ),
-                if (deckCard.quantity > 1)
+                if (dc.quantity > 1)
                   Container(
                     color: Colors.black87,
                     padding: const EdgeInsets.all(4),
                     child: Text(
-                      'x${deckCard.quantity}',
+                      'x${dc.quantity}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: Colors.white,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
               ],
             ),
           ),
+          if (banStatus != 'unlimited')
+            Positioned(
+              top: 4,
+              left: 4,
+              child: CircleAvatar(
+                radius: 12,
+                backgroundColor: banStatus == 'forbidden' ? Colors.red : banStatus == 'limited' ? Colors.orange : Colors.yellow,
+                child: Text(
+                  banStatus == 'forbidden' ? 'X' : banStatus == 'limited' ? '1' : '2',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
           Positioned(
             top: 4,
             right: 4,
@@ -326,13 +248,9 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                 iconSize: 16,
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
-                  if (deckType == 'main') {
-                    provider.removeCardFromMainDeck(deckCard.card);
-                  } else if (deckType == 'extra') {
-                    provider.removeCardFromExtraDeck(deckCard.card);
-                  } else {
-                    provider.removeCardFromSideDeck(deckCard.card);
-                  }
+                  if (deckType == 'main') provider.removeCardFromMainDeck(dc.card);
+                  else if (deckType == 'extra') provider.removeCardFromExtraDeck(dc.card);
+                  else provider.removeCardFromSideDeck(dc.card);
                 },
               ),
             ),
@@ -342,8 +260,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
     );
   }
 
-  void _showCardOptions(
-      DeckCard deckCard, DeckProvider provider, String deckType) {
+  void _showCardOptions(DeckCard dc, DeckProvider p, String type) {
     showModalBottomSheet(
       context: context,
       builder: (_) => Padding(
@@ -355,13 +272,9 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
               leading: const Icon(Icons.add),
               title: const Text('Add one more'),
               onTap: () {
-                if (deckType == 'main') {
-                  provider.addCardToMainDeck(deckCard.card);
-                } else if (deckType == 'extra') {
-                  provider.addCardToExtraDeck(deckCard.card);
-                } else {
-                  provider.addCardToSideDeck(deckCard.card);
-                }
+                if (type == 'main') p.addCardToMainDeck(dc.card, context);
+                else if (type == 'extra') p.addCardToExtraDeck(dc.card, context);
+                else p.addCardToSideDeck(dc.card, context);
                 Navigator.pop(context);
               },
             ),
@@ -369,13 +282,9 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
               leading: const Icon(Icons.remove),
               title: const Text('Remove one'),
               onTap: () {
-                if (deckType == 'main') {
-                  provider.removeCardFromMainDeck(deckCard.card);
-                } else if (deckType == 'extra') {
-                  provider.removeCardFromExtraDeck(deckCard.card);
-                } else {
-                  provider.removeCardFromSideDeck(deckCard.card);
-                }
+                if (type == 'main') p.removeCardFromMainDeck(dc.card);
+                else if (type == 'extra') p.removeCardFromExtraDeck(dc.card);
+                else p.removeCardFromSideDeck(dc.card);
                 Navigator.pop(context);
               },
             ),
@@ -385,54 +294,23 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
     );
   }
 
-  // -------------------------------------------------
-  // Save Deck
-  // -------------------------------------------------
-  Future<void> _saveDeck(BuildContext context, DeckProvider deckProvider) async {
-    final deck = deckProvider.currentDeck!;
+  Future<void> _saveDeck(BuildContext context, DeckProvider dp) async {
+    final deck = dp.currentDeck!;
     if (!deck.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Deck must have 40-60 cards in Main Deck'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Main Deck harus 40-60 kartu'), backgroundColor: Colors.orange));
       return;
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    final success = await deckProvider.saveDeck(context);
-
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    final success = await dp.saveDeck(context);
     if (!context.mounted) return;
-    Navigator.pop(context); // tutup loading
+    Navigator.pop(context);
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Deck saved successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context); // kembali ke daftar deck
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Deck saved!'), backgroundColor: Colors.green));
+      Navigator.pop(context);
     } else {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Save Failed'),
-          content: Text(deckProvider.errorMessage.isNotEmpty
-              ? deckProvider.errorMessage
-              : 'Unknown error'),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context), child: const Text('OK')),
-          ],
-        ),
-      );
+      showDialog(context: context, builder: (_) => AlertDialog(title: const Text('Save Failed'), content: Text(dp.errorMessage), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))]));
     }
   }
 
