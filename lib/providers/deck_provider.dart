@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/card_model.dart';
 import '../services/supabase_service.dart';
+import 'auth_provider.dart';
+import 'banlist_provider.dart';
 
 class DeckProvider extends ChangeNotifier {
   List<Deck> _decks = [];
   Deck? _currentDeck;
   bool _isLoading = false;
   String _errorMessage = '';
+  String _selectedBanlist = 'none';
 
   List<Deck> get decks => _decks;
   Deck? get currentDeck => _currentDeck;
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
+  String get selectedBanlist => _selectedBanlist;
+
+  void setBanlistFormat(String format) {
+    _selectedBanlist = format;
+    notifyListeners();
+  }
 
   Future<void> loadDecks() async {
     _isLoading = true;
@@ -20,12 +30,9 @@ class DeckProvider extends ChangeNotifier {
 
     try {
       _decks = await SupabaseService.instance.getAllDecks();
-      _errorMessage = '';
     } catch (e) {
       _errorMessage = 'Failed to load decks: $e';
-      print('❌ Load decks error: $e');
     }
-
     _isLoading = false;
     notifyListeners();
   }
@@ -39,73 +46,78 @@ class DeckProvider extends ChangeNotifier {
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
-    _errorMessage = '';
     notifyListeners();
   }
 
   void setCurrentDeck(Deck deck) {
     _currentDeck = deck;
-    _errorMessage = '';
     notifyListeners();
   }
 
-  void addCardToMainDeck(YugiohCard card) {
+  // FUNGSI UTAMA: Tambah kartu dengan validasi banlist
+  void _addCard(YugiohCard card, List<DeckCard> section, BuildContext context) {
     if (_currentDeck == null) return;
 
-    final existingIndex = _currentDeck!.mainDeck.indexWhere((dc) => dc.card.id == card.id);
+    // Ambil status banlist dari BanlistProvider
+    final banProvider = Provider.of<BanlistProvider>(context, listen: false);
+    final status = _selectedBanlist != 'none'
+        ? banProvider.getStatus(card) // PAKAI METHOD PUBLIC
+        : 'unlimited';
 
-    if (existingIndex >= 0) {
-      if (_currentDeck!.mainDeck[existingIndex].quantity < 3) {
-        _currentDeck!.mainDeck[existingIndex].quantity++;
-      }
-    } else {
-      if (_currentDeck!.mainDeckCount < 60) {
-        _currentDeck!.mainDeck.add(DeckCard(card: card, quantity: 1));
-      }
+    // Validasi Forbidden
+    if (status == 'forbidden') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${card.name} is Forbidden!'), backgroundColor: Colors.red),
+      );
+      return;
     }
 
+    // Hitung jumlah kartu yang sudah ada
+    final currentCount = section
+        .where((dc) => dc.card.id == card.id)
+        .fold(0, (sum, dc) => sum + dc.quantity);
+
+    // Validasi Limited (max 1)
+    if (status == 'limited' && currentCount >= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${card.name} is Limited (max 1)!'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    // Validasi Semi-Limited (max 2)
+    if (status == 'semi_limited' && currentCount >= 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${card.name} is Semi-Limited (max 2)!'), backgroundColor: Colors.yellow[700]),
+      );
+      return;
+    }
+
+    // Tambah kartu
+    final existingIndex = section.indexWhere((dc) => dc.card.id == card.id);
+    if (existingIndex >= 0) {
+      if (section[existingIndex].quantity < 3) {
+        section[existingIndex].quantity++;
+      }
+    } else {
+      section.add(DeckCard(card: card));
+    }
     notifyListeners();
   }
 
-  void addCardToExtraDeck(YugiohCard card) {
-    if (_currentDeck == null) return;
+  // Wrapper untuk tiap deck section
+  void addCardToMainDeck(YugiohCard card, BuildContext context) =>
+      _addCard(card, _currentDeck!.mainDeck, context);
 
-    final existingIndex = _currentDeck!.extraDeck.indexWhere((dc) => dc.card.id == card.id);
+  void addCardToExtraDeck(YugiohCard card, BuildContext context) =>
+      _addCard(card, _currentDeck!.extraDeck, context);
 
-    if (existingIndex >= 0) {
-      if (_currentDeck!.extraDeck[existingIndex].quantity < 3) {
-        _currentDeck!.extraDeck[existingIndex].quantity++;
-      }
-    } else {
-      if (_currentDeck!.extraDeckCount < 15) {
-        _currentDeck!.extraDeck.add(DeckCard(card: card, quantity: 1));
-      }
-    }
+  void addCardToSideDeck(YugiohCard card, BuildContext context) =>
+      _addCard(card, _currentDeck!.sideDeck, context);
 
-    notifyListeners();
-  }
-
-  void addCardToSideDeck(YugiohCard card) {
-    if (_currentDeck == null) return;
-
-    final existingIndex = _currentDeck!.sideDeck.indexWhere((dc) => dc.card.id == card.id);
-
-    if (existingIndex >= 0) {
-      if (_currentDeck!.sideDeck[existingIndex].quantity < 3) {
-        _currentDeck!.sideDeck[existingIndex].quantity++;
-      }
-    } else {
-      if (_currentDeck!.sideDeckCount < 15) {
-        _currentDeck!.sideDeck.add(DeckCard(card: card, quantity: 1));
-      }
-    }
-
-    notifyListeners();
-  }
-
+  // Hapus kartu (tidak perlu validasi)
   void removeCardFromMainDeck(YugiohCard card) {
     if (_currentDeck == null) return;
-
     final index = _currentDeck!.mainDeck.indexWhere((dc) => dc.card.id == card.id);
     if (index >= 0) {
       if (_currentDeck!.mainDeck[index].quantity > 1) {
@@ -114,13 +126,11 @@ class DeckProvider extends ChangeNotifier {
         _currentDeck!.mainDeck.removeAt(index);
       }
     }
-
     notifyListeners();
   }
 
   void removeCardFromExtraDeck(YugiohCard card) {
     if (_currentDeck == null) return;
-
     final index = _currentDeck!.extraDeck.indexWhere((dc) => dc.card.id == card.id);
     if (index >= 0) {
       if (_currentDeck!.extraDeck[index].quantity > 1) {
@@ -129,13 +139,11 @@ class DeckProvider extends ChangeNotifier {
         _currentDeck!.extraDeck.removeAt(index);
       }
     }
-
     notifyListeners();
   }
 
   void removeCardFromSideDeck(YugiohCard card) {
     if (_currentDeck == null) return;
-
     final index = _currentDeck!.sideDeck.indexWhere((dc) => dc.card.id == card.id);
     if (index >= 0) {
       if (_currentDeck!.sideDeck[index].quantity > 1) {
@@ -144,39 +152,49 @@ class DeckProvider extends ChangeNotifier {
         _currentDeck!.sideDeck.removeAt(index);
       }
     }
-
     notifyListeners();
   }
 
-  Future<bool> saveDeck() async {
+  // Save deck dengan validasi banlist
+  Future<bool> saveDeck(BuildContext context) async {
     if (_currentDeck == null) {
       _errorMessage = 'No deck to save';
       notifyListeners();
       return false;
     }
 
-    _errorMessage = '';
+    final authProvider = context.read<AuthProvider>();
+    if (!authProvider.isAuthenticated) {
+      _errorMessage = 'You must be logged in to save decks.';
+      notifyListeners();
+      return false;
+    }
+
+    // Validasi banlist sebelum save
+    if (_selectedBanlist != 'none') {
+      final banProvider = context.read<BanlistProvider>();
+      final result = banProvider.validateDeck(_currentDeck!);
+      if (!result['valid']) {
+        _errorMessage = 'Deck ilegal ($_selectedBanlist): ${result['issues'].join(', ')}';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_errorMessage), backgroundColor: Colors.red),
+        );
+        notifyListeners();
+        return false;
+      }
+    }
 
     try {
-      print('🔄 Attempting to save deck: ${_currentDeck!.name}');
-      print('📊 Main: ${_currentDeck!.mainDeckCount}, Extra: ${_currentDeck!.extraDeckCount}, Side: ${_currentDeck!.sideDeckCount}');
-
       if (_currentDeck!.id == null) {
-        print('➕ Creating new deck...');
         final id = await SupabaseService.instance.createDeck(_currentDeck!);
         _currentDeck!.id = id;
-        print('✅ Deck created with ID: $id');
       } else {
-        print('🔄 Updating existing deck...');
         await SupabaseService.instance.updateDeck(_currentDeck!);
-        print('✅ Deck updated successfully');
       }
-
       await loadDecks();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
-      print('❌ Save deck error: $e');
+      _errorMessage = 'Failed to save deck: $e';
       notifyListeners();
       return false;
     }
@@ -186,23 +204,16 @@ class DeckProvider extends ChangeNotifier {
     try {
       await SupabaseService.instance.deleteDeck(id);
       await loadDecks();
-
-      if (_currentDeck?.id == id) {
-        _currentDeck = null;
-      }
-
-      _errorMessage = '';
+      if (_currentDeck?.id == id) _currentDeck = null;
       notifyListeners();
     } catch (e) {
       _errorMessage = 'Failed to delete deck: $e';
-      print('❌ Delete deck error: $e');
       notifyListeners();
     }
   }
 
   void clearCurrentDeck() {
     _currentDeck = null;
-    _errorMessage = '';
     notifyListeners();
   }
 }

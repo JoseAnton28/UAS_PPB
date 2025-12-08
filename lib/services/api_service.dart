@@ -1,87 +1,57 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/card_model.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://db.ygoprodeck.com/api/v7';
+  static const String _baseUrl = 'https://db.ygoprodeck.com/api/v7';
 
   static Future<List<YugiohCard>> getAllCards() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/cardinfo.php'));
-
+      final response = await http.get(Uri.parse('$_baseUrl/cardinfo.php'));
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> cardsJson = data['data'];
-        return cardsJson.map((json) => YugiohCard.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load cards');
+        final data = json.decode(response.body)['data'] as List;
+        return data.map((json) => YugiohCard.fromJson(json)).toList();
       }
+      throw Exception('Failed to load cards');
     } catch (e) {
-      throw Exception('Error fetching cards: $e');
+      debugPrint('getAllCards error: $e');
+      rethrow;
     }
   }
 
   static Future<List<YugiohCard>> searchCards(String query) async {
+    if (query.trim().isEmpty) return [];
     try {
-      final response = await http.get(
-          Uri.parse('$baseUrl/cardinfo.php?fname=$query')
-      );
-
+      final url = '$_baseUrl/cardinfo.php?fname=${Uri.encodeComponent(query)}';
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> cardsJson = data['data'];
-        return cardsJson.map((json) => YugiohCard.fromJson(json)).toList();
-      } else {
-        return [];
+        final data = json.decode(response.body)['data'] as List;
+        return data.map((json) => YugiohCard.fromJson(json)).toList();
       }
+      return [];
     } catch (e) {
+      debugPrint('searchCards error: $e');
       return [];
     }
   }
 
-  static Future<YugiohCard?> getCardById(int id) async {
+  // BARU: Banlist TCG & OCG
+  static Future<List<YugiohCard>> getBanlistCards(String format) async {
+    if (!['tcg', 'ocg'].contains(format.toLowerCase())) {
+      throw Exception('Format harus tcg atau ocg');
+    }
     try {
       final response = await http.get(
-          Uri.parse('$baseUrl/cardinfo.php?id=$id')
+        Uri.parse('$_baseUrl/cardinfo.php?banlist=$format'),
       );
-
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> cardsJson = data['data'];
-        if (cardsJson.isNotEmpty) {
-          return YugiohCard.fromJson(cardsJson[0]);
-        }
+        final data = json.decode(response.body)['data'] as List;
+        return data.map((json) => YugiohCard.fromJson(json)).toList();
       }
-      return null;
+      return [];
     } catch (e) {
-      return null;
-    }
-  }
-
-  static Future<List<YugiohCard>> filterCards({
-    String? type,
-    String? race,
-    String? attribute,
-    int? level,
-  }) async {
-    try {
-      var url = '$baseUrl/cardinfo.php?';
-
-      if (type != null) url += 'type=$type&';
-      if (race != null) url += 'race=$race&';
-      if (attribute != null) url += 'attribute=$attribute&';
-      if (level != null) url += 'level=$level&';
-
-      final response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> cardsJson = data['data'];
-        return cardsJson.map((json) => YugiohCard.fromJson(json)).toList();
-      } else {
-        return [];
-      }
-    } catch (e) {
+      debugPrint('getBanlistCards error: $e');
       return [];
     }
   }

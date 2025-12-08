@@ -5,6 +5,8 @@ import 'card_search_screen.dart';
 import 'deck_list_screen.dart';
 import 'duel_simulator_screen.dart';
 import 'match_history_screen.dart';
+import 'banlist_screen.dart'; // TAMBAHAN: Banlist Screen
+import 'login_screen.dart'; // Pastikan import ini ada
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,38 +17,51 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Yu-Gi-Oh! Companion'),
         centerTitle: true,
+        elevation: 2,
         actions: [
-          // User Profile & Logout
+          // Profile & Logout Button
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
               return PopupMenuButton<String>(
-                icon: const Icon(Icons.account_circle),
+                tooltip: 'Account',
+                icon: const Icon(Icons.account_circle, size: 28),
                 itemBuilder: (context) => [
+                  // User Info (tidak bisa diklik)
                   PopupMenuItem<String>(
                     enabled: false,
-                    value: 'profile',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           authProvider.displayName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
+                        const SizedBox(height: 4),
                         Text(
-                          authProvider.currentUser?.email ?? '',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          authProvider.currentUser?.email ?? 'user@email.com',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem<String>(
+                  const PopupMenuDivider(height: 1),
+                  // Logout Button
+                  PopupMenuItem<String>(
                     value: 'logout',
                     child: Row(
-                      children: [
-                        Icon(Icons.logout, size: 20),
-                        SizedBox(width: 8),
-                        Text('Logout'),
+                      children: const [
+                        Icon(Icons.logout, color: Colors.redAccent),
+                        SizedBox(width: 12),
+                        Text(
+                          'Logout',
+                          style: TextStyle(color: Colors.redAccent),
+                        ),
                       ],
                     ),
                   ),
@@ -59,53 +74,91 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: GridView.count(
           crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
+          crossAxisSpacing: 20,
+          mainAxisSpacing: 20,
+          childAspectRatio: 1.1,
           children: [
             _buildMenuCard(
               context,
-              'Card Database',
-              Icons.search,
-              Colors.blue,
-                  () => Navigator.push(
+              title: 'Card Database',
+              icon: Icons.search,
+              color: Colors.blueAccent,
+              gradient: const LinearGradient(
+                colors: [Colors.blueAccent, Colors.indigo],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CardSearchScreen()),
               ),
             ),
             _buildMenuCard(
               context,
-              'Deck Builder',
-              Icons.style,
-              Colors.green,
-                  () => Navigator.push(
+              title: 'Deck Builder',
+              icon: Icons.style,
+              color: Colors.green,
+              gradient: const LinearGradient(
+                colors: [Colors.green, Colors.teal],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const DeckListScreen()),
               ),
             ),
             _buildMenuCard(
               context,
-              'Duel Simulator',
-              Icons.casino,
-              Colors.red,
-                  () => Navigator.push(
+              title: 'Duel Simulator',
+              icon: Icons.videogame_asset,
+              color: Colors.redAccent,
+              gradient: const LinearGradient(
+                colors: [Colors.redAccent, Colors.deepOrange],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const DuelSimulatorScreen()),
               ),
             ),
             _buildMenuCard(
               context,
-              'Match History',
-              Icons.history,
-              Colors.orange,
-                  () => Navigator.push(
+              title: 'Match History',
+              icon: Icons.history,
+              color: Colors.orange,
+              gradient: const LinearGradient(
+                colors: [Colors.orange, Colors.amber],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const MatchHistoryScreen()),
+              ),
+            ),
+            // INI YANG BARU DITAMBAHKAN: BANLIST
+            _buildMenuCard(
+              context,
+              title: 'Banlist',
+              icon: Icons.gavel,
+              color: Colors.purple,
+              gradient: const LinearGradient(
+                colors: [Colors.purple, Colors.deepPurple],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BanlistScreen()),
               ),
             ),
           ],
@@ -114,39 +167,73 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _handleLogout(BuildContext context) {
-    Future.delayed(Duration.zero, () async {
-      await context.read<AuthProvider>().signOut();
-    });
+  // Fungsi Logout yang PASTI kembali ke LoginScreen
+  void _handleLogout(BuildContext context) async {
+    final authProvider = context.read<AuthProvider>();
+
+    // Tampilkan loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      await authProvider.signOut();
+      if (!context.mounted) return;
+
+      Navigator.pop(context); // Tutup loading
+
+      // Pastikan pindah ke LoginScreen & bersihkan stack
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false, // Hapus semua route sebelumnya
+      );
+    } catch (e) {
+      Navigator.pop(context); // Tutup loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Logout failed: $e')),
+      );
+    }
   }
 
+  // Widget kartu menu dengan gradient cantik
   Widget _buildMenuCard(
-      BuildContext context,
-      String title,
-      IconData icon,
-      Color color,
-      VoidCallback onTap,
-      ) {
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+        required Color color,
+        required Gradient gradient,
+        required VoidCallback onTap,
+      }) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
+        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 64, color: color),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: gradient,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 70, color: Colors.white),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

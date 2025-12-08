@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import '../models/card_model.dart';
-import '../services/api_service.dart';
-import '../services/supabase_service.dart';
+import '../services/api_service.dart'; // Pastikan path ini benar!
 
 class CardProvider extends ChangeNotifier {
   List<YugiohCard> _allCards = [];
   List<YugiohCard> _searchResults = [];
-  List<YugiohCard> _favorites = [];
   bool _isLoading = false;
   String _errorMessage = '';
 
   List<YugiohCard> get allCards => _allCards;
   List<YugiohCard> get searchResults => _searchResults;
-  List<YugiohCard> get favorites => _favorites;
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
 
   Future<void> loadAllCards() async {
+    if (_isLoading) return;
+
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
@@ -24,8 +23,10 @@ class CardProvider extends ChangeNotifier {
     try {
       _allCards = await ApiService.getAllCards();
       _searchResults = _allCards;
+      debugPrint('Loaded ${_allCards.length} cards');
     } catch (e) {
-      _errorMessage = 'Failed to load cards: $e';
+      _errorMessage = 'Failed to load cards. Check your connection.';
+      debugPrint('Load cards error: $e');
     }
 
     _isLoading = false;
@@ -33,7 +34,7 @@ class CardProvider extends ChangeNotifier {
   }
 
   Future<void> searchCards(String query) async {
-    if (query.isEmpty) {
+    if (query.trim().isEmpty) {
       _searchResults = _allCards;
       notifyListeners();
       return;
@@ -45,8 +46,9 @@ class CardProvider extends ChangeNotifier {
     try {
       _searchResults = await ApiService.searchCards(query);
     } catch (e) {
-      _errorMessage = 'Search failed: $e';
+      _errorMessage = 'Search failed. Try again.';
       _searchResults = [];
+      debugPrint('Search error: $e');
     }
 
     _isLoading = false;
@@ -54,48 +56,15 @@ class CardProvider extends ChangeNotifier {
   }
 
   void filterLocalCards(String query) {
-    if (query.isEmpty) {
+    if (query.trim().isEmpty) {
       _searchResults = _allCards;
     } else {
-      _searchResults = _allCards
-          .where((card) =>
-      card.name.toLowerCase().contains(query.toLowerCase()) ||
-          card.desc.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      final lowerQuery = query.toLowerCase();
+      _searchResults = _allCards.where((card) {
+        return card.name.toLowerCase().contains(lowerQuery) ||
+            card.desc.toLowerCase().contains(lowerQuery);
+      }).toList();
     }
     notifyListeners();
-  }
-
-  Future<void> loadFavorites() async {
-    try {
-      _favorites = await SupabaseService.instance.getFavorites();
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = 'Failed to load favorites: $e';
-    }
-  }
-
-  Future<void> toggleFavorite(YugiohCard card) async {
-    try {
-      final isFav = await SupabaseService.instance.isFavorite(card.id);
-
-      if (isFav) {
-        await SupabaseService.instance.removeFavorite(card.id);
-      } else {
-        await SupabaseService.instance.addFavorite(card);
-      }
-
-      await loadFavorites();
-    } catch (e) {
-      _errorMessage = 'Failed to toggle favorite: $e';
-    }
-  }
-
-  Future<bool> isFavorite(int cardId) async {
-    try {
-      return await SupabaseService.instance.isFavorite(cardId);
-    } catch (e) {
-      return false;
-    }
   }
 }
