@@ -6,6 +6,7 @@ import 'deck_list_screen.dart';
 import 'duel_simulator_screen.dart';
 import 'match_history_screen.dart';
 import 'banlist_screen.dart';
+import 'pack_opening_screen.dart'; // TAMBAHAN BARU
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,7 +30,6 @@ class _HomeScreenState extends State<HomeScreen>
     _controller.forward();
   }
 
-  // 🔥 Tambahan agar animasi tampil kembali saat kembali ke halaman ini
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -177,13 +177,27 @@ class _HomeScreenState extends State<HomeScreen>
                 MaterialPageRoute(builder: (_) => const BanlistScreen()),
               ),
             ),
+            // TAMBAHAN BARU: Pack Opening
+            _buildMenuCard(
+              index: 5,
+              title: 'Pack Opening',
+              icon: Icons.card_giftcard,
+              gradient: const LinearGradient(
+                colors: [Colors.pink, Colors.purpleAccent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PackOpeningScreen()),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // Animated Menu Card
   Widget _buildMenuCard({
     required int index,
     required String title,
@@ -257,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen>
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
+            (route) => false,
       );
     } catch (e) {
       Navigator.pop(context);

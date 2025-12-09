@@ -12,9 +12,8 @@ class YugiohCard {
   final String? attribute;
   final List<CardImage> cardImages;
   final String? archetype;
-
-  // TAMBAHAN BARU: Untuk menyimpan status banlist (Forbidden, Limited, dll)
   final Map<String, dynamic>? banlistInfo;
+  final List<CardSet>? cardSets; // TAMBAHAN BARU untuk pack filtering
 
   YugiohCard({
     required this.id,
@@ -28,7 +27,8 @@ class YugiohCard {
     this.attribute,
     required this.cardImages,
     this.archetype,
-    this.banlistInfo, // TAMBAHAN
+    this.banlistInfo,
+    this.cardSets, // TAMBAHAN BARU
   });
 
   factory YugiohCard.fromJson(Map<String, dynamic> json) {
@@ -46,7 +46,13 @@ class YugiohCard {
           .map((img) => CardImage.fromJson(img))
           .toList(),
       archetype: json['archetype'],
-      banlistInfo: json['banlist_info'] as Map<String, dynamic>?, // TAMBAHAN INI PENTING!
+      banlistInfo: json['banlist_info'] as Map<String, dynamic>?,
+      // TAMBAHAN BARU: Parse card_sets
+      cardSets: json['card_sets'] != null
+          ? (json['card_sets'] as List)
+          .map((set) => CardSet.fromJson(set))
+          .toList()
+          : null,
     );
   }
 
@@ -67,7 +73,9 @@ class YugiohCard {
         'image_url': img.imageUrl,
         'image_url_small': img.imageUrlSmall,
       }).toList(),
-      'banlist_info': banlistInfo, // Supaya bisa disimpan juga
+      'banlist_info': banlistInfo,
+      // TAMBAHAN BARU: Include card_sets
+      'card_sets': cardSets?.map((set) => set.toJson()).toList(),
     };
   }
 
@@ -92,6 +100,43 @@ class CardImage {
       imageUrl: json['image_url'],
       imageUrlSmall: json['image_url_small'],
     );
+  }
+}
+
+// TAMBAHAN BARU: Model untuk card set
+class CardSet {
+  final String setName;
+  final String setCode;
+  final String setRarity;
+  final String setRarityCode;
+  final String setPrice;
+
+  CardSet({
+    required this.setName,
+    required this.setCode,
+    required this.setRarity,
+    required this.setRarityCode,
+    required this.setPrice,
+  });
+
+  factory CardSet.fromJson(Map<String, dynamic> json) {
+    return CardSet(
+      setName: json['set_name'] ?? '',
+      setCode: json['set_code'] ?? '',
+      setRarity: json['set_rarity'] ?? '',
+      setRarityCode: json['set_rarity_code'] ?? '',
+      setPrice: json['set_price'] ?? '0',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'set_name': setName,
+      'set_code': setCode,
+      'set_rarity': setRarity,
+      'set_rarity_code': setRarityCode,
+      'set_price': setPrice,
+    };
   }
 }
 

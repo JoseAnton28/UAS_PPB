@@ -147,8 +147,8 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                               _tabController.index == 1
                                   ? 'Extra Deck only'
                                   : _tabController.index == 0
-                                      ? 'Main Deck'
-                                      : 'Side Deck',
+                                  ? 'Main Deck'
+                                  : 'Side Deck',
                               style: const TextStyle(fontSize: 12),
                             ),
                           ),
@@ -204,14 +204,14 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                                           backgroundColor: banStatus == 'forbidden'
                                               ? Colors.red
                                               : banStatus == 'limited'
-                                                  ? Colors.orange
-                                                  : Colors.yellow,
+                                              ? Colors.orange
+                                              : Colors.yellow,
                                           child: Text(
                                             banStatus == 'forbidden'
                                                 ? 'X'
                                                 : banStatus == 'limited'
-                                                    ? '1'
-                                                    : '2',
+                                                ? '1'
+                                                : '2',
                                             style: const TextStyle(
                                                 fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                                           ),
@@ -388,14 +388,14 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                 backgroundColor: banStatus == 'forbidden'
                     ? Colors.red
                     : banStatus == 'limited'
-                        ? Colors.orange
-                        : Colors.yellow,
+                    ? Colors.orange
+                    : Colors.yellow,
                 child: Text(
                   banStatus == 'forbidden'
                       ? 'X'
                       : banStatus == 'limited'
-                          ? '1'
-                          : '2',
+                      ? '1'
+                      : '2',
                   style: const TextStyle(
                       fontSize: 12, fontWeight: FontWeight.bold),
                 ),
