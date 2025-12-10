@@ -7,8 +7,7 @@ class SupabaseService {
 
   static SupabaseClient get client => Supabase.instance.client;
 
-  // Initialize Supabase
-  static Future<void> initialize() async {
+    static Future<void> initialize() async {
     await Supabase.initialize(
       url: 'https://yyhzcartqpczjfcfxauj.supabase.co',
       anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5aHpjYXJ0cXBjempmY2Z4YXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDY3NTQsImV4cCI6MjA4MDY4Mjc1NH0.Tt38qzc-qSUPKhf_kq5sWrM8SbdLnRdq-VvvPbsT9O0',
@@ -29,7 +28,6 @@ class SupabaseService {
     }
   }
 
-  // ========== DECK OPERATIONS ==========
 
   Future<String> createDeck(Deck deck) async {
     try {
@@ -125,7 +123,6 @@ class SupabaseService {
     await client.from('decks').delete().eq('id', id);
   }
 
-  // ========== FAVORITES OPERATIONS ==========
 
   Future<void> addFavorite(YugiohCard card) async {
     final userId = client.auth.currentUser?.id;
@@ -163,7 +160,6 @@ class SupabaseService {
     return response != null;
   }
 
-  // ========== MATCH HISTORY OPERATIONS ==========
 
   Future<String> addMatchHistory(MatchHistory match) async {
     final userId = client.auth.currentUser?.id;
@@ -206,7 +202,6 @@ class SupabaseService {
     await client.from('match_history').delete().eq('id', id);
   }
 
-  // ========== USER PROFILE OPERATIONS ==========
 
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     final response = await client

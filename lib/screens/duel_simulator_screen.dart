@@ -37,8 +37,7 @@ class DuelSimulatorScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Column(
                   children: [
-                    // Timer
-                    Text(
+                                        Text(
                       provider.timerDisplay,
                       style: const TextStyle(
                         fontSize: 32,
@@ -68,8 +67,7 @@ class DuelSimulatorScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Dice and Coin
-                    Row(
+                                        Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildToolButton(
@@ -102,8 +100,7 @@ class DuelSimulatorScreen extends StatelessWidget {
                 ),
               ),
 
-              // Player 1 (Bottom)
-              Expanded(
+                            Expanded(
                 child: _buildPlayerSection(
                   context,
                   provider.player1Name,

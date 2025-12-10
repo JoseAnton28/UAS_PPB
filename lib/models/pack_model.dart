@@ -5,7 +5,6 @@ class PackSet {
   final DateTime releaseDate;
   final String imageUrl;
   final int cardsPerPack;
-  final List<String> rarities;
 
   PackSet({
     required this.id,
@@ -14,7 +13,6 @@ class PackSet {
     required this.releaseDate,
     required this.imageUrl,
     required this.cardsPerPack,
-    required this.rarities,
   });
 }
 
@@ -37,6 +35,7 @@ class OpenedCard {
   final String name;
   final String imageUrl;
   final String rarity;
+  final String setCode;
   final bool isNew;
 
   OpenedCard({
@@ -44,6 +43,7 @@ class OpenedCard {
     required this.name,
     required this.imageUrl,
     required this.rarity,
+    required this.setCode,
     this.isNew = false,
   });
 }

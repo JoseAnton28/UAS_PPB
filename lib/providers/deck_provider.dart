@@ -106,8 +106,7 @@ class DeckProvider extends ChangeNotifier {
   void addCardToSideDeck(YugiohCard card, BuildContext context) =>
       _addCard(card, _currentDeck!.sideDeck, context);
 
-  // Hapus kartu (tidak perlu validasi)
-  void removeCardFromMainDeck(YugiohCard card) {
+    void removeCardFromMainDeck(YugiohCard card) {
     if (_currentDeck == null) return;
     final index = _currentDeck!.mainDeck.indexWhere((dc) => dc.card.id == card.id);
     if (index >= 0) {
@@ -146,8 +145,7 @@ class DeckProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Save deck dengan validasi banlist
-  Future<bool> saveDeck(BuildContext context) async {
+    Future<bool> saveDeck(BuildContext context) async {
     if (_currentDeck == null) {
       _errorMessage = 'No deck to save';
       notifyListeners();
@@ -161,8 +159,7 @@ class DeckProvider extends ChangeNotifier {
       return false;
     }
 
-    // Validasi banlist sebelum save
-    if (_selectedBanlist != 'none') {
+        if (_selectedBanlist != 'none') {
       final banProvider = context.read<BanlistProvider>();
       final result = banProvider.validateDeck(_currentDeck!);
       if (!result['valid']) {

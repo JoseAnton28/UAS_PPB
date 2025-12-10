@@ -1,4 +1,4 @@
-import 'dart:math';
+// lib/screens/pack_opening_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -24,8 +24,7 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
       duration: const Duration(milliseconds: 800),
     );
     _controller.forward();
-
-        Future.microtask(() => context.read<PackProvider>().loadCards());
+    Future.microtask(() => context.read<PackProvider>().loadCards());
   }
 
   @override
@@ -111,7 +110,7 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
   Widget _buildPackCard(PackSet pack, int index) {
     final animation = CurvedAnimation(
       parent: _controller,
-      curve: Interval(index * 0.08, 1, curve: Curves.easeOut),
+      curve: Interval(index * 0.15, 1, curve: Curves.easeOut),
     );
 
     return FadeTransition(
@@ -242,13 +241,10 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
   }
 
   Future<void> _openPack(PackSet pack) async {
-    // Show loading
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
@@ -256,9 +252,8 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
       final opening = await provider.openPack(pack);
 
       if (!mounted) return;
-      Navigator.pop(context); // Close loading
+      Navigator.pop(context);
 
-      // Navigate to animation screen
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -291,7 +286,6 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
           ),
           child: Column(
             children: [
-              // Handle
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 width: 40,
@@ -301,7 +295,6 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -325,7 +318,6 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
                 ),
               ),
               const Divider(),
-              // History List
               Expanded(
                 child: provider.openingHistory.isEmpty
                     ? const Center(
@@ -381,10 +373,7 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
                     children: [
                       Text(
                         opening.pack.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -410,8 +399,8 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    card.rarity[0],
-                    style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
+                    card.rarity.split(' ').first,
+                    style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.bold),
                   ),
                 );
               }).toList(),
@@ -424,7 +413,7 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
 }
 
 // ============================================================================
-// PACK ANIMATION SCREEN (Dalam file yang sama)
+// PACK ANIMATION SCREEN - TAP TO REVEAL
 // ============================================================================
 
 class PackAnimationScreen extends StatefulWidget {
@@ -439,85 +428,68 @@ class PackAnimationScreen extends StatefulWidget {
 class _PackAnimationScreenState extends State<PackAnimationScreen>
     with TickerProviderStateMixin {
   late AnimationController _packController;
-  late AnimationController _revealController;
+  late AnimationController _cardController;
   late Animation<double> _packScale;
-  late Animation<double> _packRotation;
   late Animation<double> _packOpacity;
+  late Animation<double> _cardScale;
+  late Animation<double> _cardRotation;
 
   int _currentCardIndex = 0;
   bool _showingCards = false;
-  bool _canSkip = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Pack opening animation
+    // Pack animation
     _packController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1000),
     );
 
-    _packScale = Tween<double>(begin: 1.0, end: 1.3).animate(
-      CurvedAnimation(parent: _packController, curve: const Interval(0, 0.5, curve: Curves.easeOut)),
-    );
-
-    _packRotation = Tween<double>(begin: 0, end: pi * 2).animate(
-      CurvedAnimation(parent: _packController, curve: const Interval(0.3, 0.8, curve: Curves.easeInOut)),
+    _packScale = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _packController, curve: Curves.easeOut),
     );
 
     _packOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _packController, curve: const Interval(0.7, 1.0, curve: Curves.easeIn)),
+      CurvedAnimation(parent: _packController, curve: const Interval(0.7, 1.0)),
     );
 
     // Card reveal animation
-    _revealController = AnimationController(
+    _cardController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
     );
 
-    // Start animation sequence
-    _startAnimation();
+    _cardScale = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _cardController, curve: Curves.easeOutBack),
+    );
 
-    // Allow skip after 1 second
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) setState(() => _canSkip = true);
-    });
+    _cardRotation = Tween<double>(begin: -0.3, end: 0.0).animate(
+      CurvedAnimation(parent: _cardController, curve: Curves.easeOut),
+    );
+
+    _startPackAnimation();
   }
 
-  Future<void> _startAnimation() async {
+  Future<void> _startPackAnimation() async {
     await _packController.forward();
     if (mounted) {
       setState(() => _showingCards = true);
-      _revealNextCard();
     }
   }
 
   void _revealNextCard() {
-    if (_currentCardIndex < widget.opening.cards.length) {
-      _revealController.forward(from: 0).then((_) {
-        setState(() => _currentCardIndex++);
-        if (_currentCardIndex < widget.opening.cards.length) {
-          Future.delayed(const Duration(milliseconds: 300), _revealNextCard);
-        }
-      });
-    }
-  }
+    if (_currentCardIndex >= widget.opening.cards.length) return;
 
-  void _skipToEnd() {
-    if (!_canSkip) return;
-    setState(() {
-      _currentCardIndex = widget.opening.cards.length;
-      _showingCards = true;
-    });
-    _packController.stop();
-    _revealController.stop();
+    setState(() => _currentCardIndex++);
+    _cardController.forward(from: 0);
   }
 
   @override
   void dispose() {
     _packController.dispose();
-    _revealController.dispose();
+    _cardController.dispose();
     super.dispose();
   }
 
@@ -525,107 +497,49 @@ class _PackAnimationScreenState extends State<PackAnimationScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Background particles
-          ...List.generate(20, (i) => _buildParticle(i)),
-
-          // Main content
-          SafeArea(
-            child: Column(
-              children: [
-                // Top bar
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      Text(
-                        widget.opening.pack.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (_canSkip && !(_currentCardIndex == widget.opening.cards.length))
-                        TextButton(
-                          onPressed: _skipToEnd,
-                          child: const Text(
-                            'SKIP',
-                            style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 48),
-                    ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Top bar
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                ),
-
-                // Animation area
-                Expanded(
-                  child: Center(
-                    child: !_showingCards
-                        ? _buildPackAnimation()
-                        : _buildCardsReveal(),
-                  ),
-                ),
-
-                // Progress indicator & Open Again button
-                if (_showingCards && _currentCardIndex == widget.opening.cards.length)
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        // Progress dots
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            widget.opening.cards.length,
-                                (i) => Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.yellow,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Open Again button
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context); // Kembali ke list
-                            // Langsung buka pack yang sama lagi
-                            Future.delayed(const Duration(milliseconds: 300), () {
-                              _openPackAgain(context, widget.opening.pack);
-                            });
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('OPEN AGAIN'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            elevation: 5,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    widget.opening.pack.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                  )
-                else if (_showingCards)
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
+
+            // Main content
+            Expanded(
+              child: Center(
+                child: !_showingCards
+                    ? _buildPackAnimation()
+                    : _buildCardReveal(),
+              ),
+            ),
+
+            // Bottom controls
+            if (_showingCards)
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    // Progress
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         widget.opening.cards.length,
@@ -635,16 +549,47 @@ class _PackAnimationScreenState extends State<PackAnimationScreen>
                           height: 10,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: i < _currentCardIndex ? Colors.yellow : Colors.grey[700],
+                            color: i < _currentCardIndex
+                                ? Colors.yellow
+                                : Colors.grey[700],
                           ),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+                    const SizedBox(height: 16),
+                    // Tap instruction
+                    if (_currentCardIndex < widget.opening.cards.length)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: Colors.white30),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.touch_app, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'TAP TO REVEAL',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -655,243 +600,30 @@ class _PackAnimationScreenState extends State<PackAnimationScreen>
       builder: (context, child) {
         return Transform.scale(
           scale: _packScale.value,
-          child: Transform.rotate(
-            angle: _packRotation.value,
-            child: Opacity(
-              opacity: _packOpacity.value,
-              child: Hero(
-                tag: 'pack-${widget.opening.pack.id}',
-                child: Container(
-                  width: 200,
-                  height: 280,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.yellow.withOpacity(0.5),
-                        blurRadius: 30,
-                        spreadRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: CachedNetworkImage(
-                      imageUrl: widget.opening.pack.imageUrl,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // Helper function untuk open again
-  void _openPackAgain(BuildContext context, PackSet pack) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      final provider = context.read<PackProvider>();
-      final opening = await provider.openPack(pack);
-
-      if (!context.mounted) return;
-      Navigator.pop(context); // Close loading
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PackAnimationScreen(opening: opening),
-        ),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
-  }
-
-  Widget _buildCardsReveal() {
-    if (_currentCardIndex == 0) {
-      return const SizedBox();
-    }
-
-    final displayedCards = widget.opening.cards.take(_currentCardIndex).toList();
-
-    return PageView.builder(
-      itemCount: displayedCards.length,
-      itemBuilder: (context, index) {
-        final card = displayedCards[index];
-        final provider = context.read<PackProvider>();
-        final rarityColor = provider.getRarityColor(card.rarity);
-
-        return AnimatedBuilder(
-          animation: _revealController,
-          builder: (context, child) {
-            final isCurrentCard = index == _currentCardIndex - 1;
-            final opacity = isCurrentCard ? _revealController.value : 1.0;
-            final scale = isCurrentCard ? 0.8 + (_revealController.value * 0.2) : 1.0;
-
-            return Transform.scale(
-              scale: scale,
-              child: Opacity(
-                opacity: opacity,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Card image
-                    Container(
-                      width: 280,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: rarityColor.withOpacity(0.6),
-                            blurRadius: 40,
-                            spreadRadius: 15,
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: CachedNetworkImage(
-                              imageUrl: card.imageUrl,
-                              fit: BoxFit.contain,
-                              placeholder: (_, __) => Container(
-                                color: Colors.grey[900],
-                                child: const Center(child: CircularProgressIndicator()),
-                              ),
-                            ),
-                          ),
-                          // NEW badge
-                          if (card.isNew)
-                            Positioned(
-                              top: 16,
-                              right: 16,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(colors: [Colors.orange, Colors.red]),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.orange.withOpacity(0.5),
-                                      blurRadius: 10,
-                                    ),
-                                  ],
-                                ),
-                                child: const Text(
-                                  'NEW',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Card name
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Text(
-                        card.name,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Rarity badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: rarityColor.withOpacity(0.2),
-                        border: Border.all(color: rarityColor, width: 2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        card.rarity.toUpperCase(),
-                        style: TextStyle(
-                          color: rarityColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Card counter
-                    Text(
-                      '${index + 1} / ${widget.opening.cards.length}',
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 16,
-                      ),
+          child: Opacity(
+            opacity: _packOpacity.value,
+            child: Hero(
+              tag: 'pack-${widget.opening.pack.id}',
+              child: Container(
+                width: 200,
+                height: 280,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.purple.withOpacity(0.5),
+                      blurRadius: 30,
+                      spreadRadius: 10,
                     ),
                   ],
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildParticle(int index) {
-    final random = Random(index);
-    final size = 2.0 + random.nextDouble() * 4;
-    final x = random.nextDouble() * MediaQuery.of(context).size.width;
-    final y = random.nextDouble() * MediaQuery.of(context).size.height;
-    final duration = 3000 + random.nextInt(2000);
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: duration),
-      curve: Curves.easeInOut,
-      onEnd: () => setState(() {}),
-      builder: (context, value, child) {
-        return Positioned(
-          left: x,
-          top: y + (sin(value * pi * 2) * 50),
-          child: Opacity(
-            opacity: 0.3 + (sin(value * pi * 2) * 0.3),
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.yellow.shade200,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.yellow.withOpacity(0.5),
-                    blurRadius: 4,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.opening.pack.imageUrl,
+                    fit: BoxFit.cover,
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -899,4 +631,164 @@ class _PackAnimationScreenState extends State<PackAnimationScreen>
       },
     );
   }
-}
+
+  Widget _buildCardReveal() {
+    if (_currentCardIndex == 0) {
+      return GestureDetector(
+        onTap: _revealNextCard,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.transparent,
+          child: const Center(
+            child: Icon(Icons.touch_app, color: Colors.white54, size: 80),
+          ),
+        ),
+      );
+    }
+
+    final card = widget.opening.cards[_currentCardIndex - 1];
+    final provider = context.read<PackProvider>();
+    final rarityColor = provider.getRarityColor(card.rarity);
+
+    return GestureDetector(
+        onTap: _currentCardIndex < widget.opening.cards.length
+            ? _revealNextCard
+            : null,
+        child: AnimatedBuilder(
+            animation: _cardController,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _cardScale.value,
+                child: Transform.rotate(
+                  angle: _cardRotation.value,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Card image
+                      Container(
+                        width: 280,
+                        height: 400,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: rarityColor.withOpacity(0.6),
+                              blurRadius: 40,
+                              spreadRadius: 15,
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: CachedNetworkImage(
+                                imageUrl: card.imageUrl,
+                                fit: BoxFit.contain,
+                                placeholder: (_, __) =>
+                                    Container(
+                                      color: Colors.grey[900],
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    ),
+                              ),
+                            ),
+                            if (card.isNew)
+                              Positioned(
+                                top: 16,
+                                right: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Colors.orange, Colors.red],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    'NEW',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Card name
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          card.name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Rarity badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: rarityColor.withOpacity(0.2),
+                          border: Border.all(color: rarityColor, width: 2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          card.rarity.toUpperCase(),
+                          style: TextStyle(
+                            color: rarityColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Set code
+                      if (card.setCode.isNotEmpty)
+                        Text(
+                          card.setCode,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                          ),
+                        ),
+                      const SizedBox(height: 16),
+
+                      // Counter
+                      Text(
+                        '$_currentCardIndex / ${widget.opening.cards.length}',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+              )
+              );
+            }
+            }
