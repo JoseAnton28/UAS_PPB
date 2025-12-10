@@ -36,8 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo/Title
-                  const Icon(Icons.style, size: 80, color: Colors.purple),
+                                    const Icon(Icons.style, size: 80, color: Colors.purple),
                   const SizedBox(height: 16),
                   const Text(
                     'Yu-Gi-Oh!',
@@ -56,8 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 48),
 
-                  // Form
-                  Card(
+                                    Card(
                     elevation: 8,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -79,8 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Email
-                            TextFormField(
+                                                        TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               decoration: InputDecoration(
@@ -102,8 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Password
-                            TextFormField(
+                                                        TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
                               decoration: InputDecoration(
@@ -133,8 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Login Button
-                            Consumer<AuthProvider>(
+                                                        Consumer<AuthProvider>(
                               builder: (context, authProvider, child) {
                                 if (authProvider.isLoading) {
                                   return const Center(
@@ -158,8 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
 
-                            // Error Message
-                            Consumer<AuthProvider>(
+                                                        Consumer<AuthProvider>(
                               builder: (context, authProvider, child) {
                                 if (authProvider.errorMessage.isNotEmpty) {
                                   return Padding(
@@ -177,8 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             const SizedBox(height: 16),
 
-                            // Sign Up Link
-                            Row(
+                                                        Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Text("Don't have an account? "),
@@ -226,8 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (success && context.mounted) {
         print('✅ Login successful, navigating to home...');
 
-        // Verify session before navigating
-        final user = Supabase.instance.client.auth.currentUser;
+                final user = Supabase.instance.client.auth.currentUser;
         print('📝 Current user: ${user?.email}');
 
         Navigator.pushReplacement(

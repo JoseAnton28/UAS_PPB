@@ -16,8 +16,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void _initAuth() {
-    // Get current session
-    final session = Supabase.instance.client.auth.currentSession;
+        final session = Supabase.instance.client.auth.currentSession;
     _currentUser = session?.user;
 
     if (_currentUser != null) {
@@ -26,8 +25,7 @@ class AuthProvider extends ChangeNotifier {
       print('⚠️ Auth: No active session');
     }
 
-    // Listen to auth state changes
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
       _currentUser = data.session?.user;
 
@@ -52,8 +50,7 @@ class AuthProvider extends ChangeNotifier {
         data: {'display_name': displayName},
       );
 
-      if (response.session != null) {  // Changed to check session, not user (for confirmation flow)
-        _currentUser = response.user;
+      if (response.session != null) {          _currentUser = response.user;
         _isLoading = false;
         notifyListeners();
         return true;
@@ -82,8 +79,7 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
 
-      if (response.session != null) {  // Check session
-        _currentUser = response.user;
+      if (response.session != null) {          _currentUser = response.user;
         _isLoading = false;
         notifyListeners();
         return true;

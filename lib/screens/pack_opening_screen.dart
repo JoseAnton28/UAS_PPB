@@ -1,4 +1,3 @@
-// lib/screens/pack_opening_screen.dart
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,8 +25,7 @@ class _PackOpeningScreenState extends State<PackOpeningScreen>
     );
     _controller.forward();
 
-    // Load cards di background
-    Future.microtask(() => context.read<PackProvider>().loadCards());
+        Future.microtask(() => context.read<PackProvider>().loadCards());
   }
 
   @override

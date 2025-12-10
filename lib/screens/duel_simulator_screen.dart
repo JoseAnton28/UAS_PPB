@@ -22,8 +22,7 @@ class DuelSimulatorScreen extends StatelessWidget {
         builder: (context, provider, child) {
           return Column(
             children: [
-              // Player 2 (Top)
-              Expanded(
+                            Expanded(
                 child: _buildPlayerSection(
                   context,
                   provider.player2Name,
@@ -33,8 +32,7 @@ class DuelSimulatorScreen extends StatelessWidget {
                 ),
               ),
 
-              // Middle Tools Section
-              Container(
+                            Container(
                 color: const Color(0xFF0f3460),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Column(

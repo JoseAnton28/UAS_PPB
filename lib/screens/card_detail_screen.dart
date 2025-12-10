@@ -1,4 +1,3 @@
-// lib/screens/card_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/card_model.dart';
@@ -23,16 +22,14 @@ class _CardDetailScreenState extends State<CardDetailScreen>
   void initState() {
     super.initState();
 
-    // Animasi gambar
-    _imageController =
+        _imageController =
         AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
     _imageScale = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _imageController, curve: Curves.easeOutBack),
     );
     _imageController.forward();
 
-    // Animasi card muncul berurutan
-    _listController =
+        _listController =
         AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
     _listController.forward();
   }
@@ -44,8 +41,7 @@ class _CardDetailScreenState extends State<CardDetailScreen>
     super.dispose();
   }
 
-  // animasi tiap info card
-  Widget _animatedItem(int index, Widget child) {
+    Widget _animatedItem(int index, Widget child) {
     return FadeTransition(
       opacity: Tween<double>(begin: 0, end: 1)
           .animate(CurvedAnimation(parent: _listController, curve: Interval(index * 0.1, 1))),
@@ -74,8 +70,7 @@ class _CardDetailScreenState extends State<CardDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // image animated
-            Center(
+                        Center(
               child: ScaleTransition(
                 scale: _imageScale,
                 child: Container(
@@ -121,8 +116,7 @@ class _CardDetailScreenState extends State<CardDetailScreen>
 
             const SizedBox(height: 20),
 
-            // description animated
-            _animatedItem(
+                        _animatedItem(
               index++,
               Card(
                 elevation: 4,

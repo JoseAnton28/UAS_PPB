@@ -61,8 +61,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // Display Name
-                        TextFormField(
+                                                TextFormField(
                           controller: _nameController,
                           decoration: InputDecoration(
                             labelText: 'Display Name',
@@ -80,8 +79,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Email
-                        TextFormField(
+                                                TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
@@ -103,8 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Password
-                        TextFormField(
+                                                TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
@@ -134,8 +131,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Confirm Password
-                        TextFormField(
+                                                TextFormField(
                           controller: _confirmPasswordController,
                           obscureText: _obscureConfirmPassword,
                           decoration: InputDecoration(
@@ -165,8 +161,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // Sign Up Button
-                        Consumer<AuthProvider>(
+                                                Consumer<AuthProvider>(
                           builder: (context, authProvider, child) {
                             if (authProvider.isLoading) {
                               return const Center(
@@ -190,8 +185,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           },
                         ),
 
-                        // Error Message
-                        Consumer<AuthProvider>(
+                                                Consumer<AuthProvider>(
                           builder: (context, authProvider, child) {
                             if (authProvider.errorMessage.isNotEmpty) {
                               return Padding(

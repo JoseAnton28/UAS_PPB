@@ -54,47 +54,39 @@ class DeckProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // FUNGSI UTAMA: Tambah kartu dengan validasi banlist
-  void _addCard(YugiohCard card, List<DeckCard> section, BuildContext context) {
+    void _addCard(YugiohCard card, List<DeckCard> section, BuildContext context) {
     if (_currentDeck == null) return;
 
-    // Ambil status banlist dari BanlistProvider
-    final banProvider = Provider.of<BanlistProvider>(context, listen: false);
+        final banProvider = Provider.of<BanlistProvider>(context, listen: false);
     final status = _selectedBanlist != 'none'
-        ? banProvider.getStatus(card) // PAKAI METHOD PUBLIC
-        : 'unlimited';
+        ? banProvider.getStatus(card)         : 'unlimited';
 
-    // Validasi Forbidden
-    if (status == 'forbidden') {
+        if (status == 'forbidden') {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${card.name} is Forbidden!'), backgroundColor: Colors.red),
       );
       return;
     }
 
-    // Hitung jumlah kartu yang sudah ada
-    final currentCount = section
+        final currentCount = section
         .where((dc) => dc.card.id == card.id)
         .fold(0, (sum, dc) => sum + dc.quantity);
 
-    // Validasi Limited (max 1)
-    if (status == 'limited' && currentCount >= 1) {
+        if (status == 'limited' && currentCount >= 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${card.name} is Limited (max 1)!'), backgroundColor: Colors.orange),
       );
       return;
     }
 
-    // Validasi Semi-Limited (max 2)
-    if (status == 'semi_limited' && currentCount >= 2) {
+        if (status == 'semi_limited' && currentCount >= 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${card.name} is Semi-Limited (max 2)!'), backgroundColor: Colors.yellow[700]),
       );
       return;
     }
 
-    // Tambah kartu
-    final existingIndex = section.indexWhere((dc) => dc.card.id == card.id);
+        final existingIndex = section.indexWhere((dc) => dc.card.id == card.id);
     if (existingIndex >= 0) {
       if (section[existingIndex].quantity < 3) {
         section[existingIndex].quantity++;
@@ -105,8 +97,7 @@ class DeckProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Wrapper untuk tiap deck section
-  void addCardToMainDeck(YugiohCard card, BuildContext context) =>
+    void addCardToMainDeck(YugiohCard card, BuildContext context) =>
       _addCard(card, _currentDeck!.mainDeck, context);
 
   void addCardToExtraDeck(YugiohCard card, BuildContext context) =>

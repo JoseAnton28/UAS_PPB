@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/card_model.dart';
-import '../services/api_service.dart'; // Pastikan path ini benar!
-
+import '../services/api_service.dart';
 class CardProvider extends ChangeNotifier {
   List<YugiohCard> _allCards = [];
   List<YugiohCard> _searchResults = [];

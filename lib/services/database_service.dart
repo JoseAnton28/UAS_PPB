@@ -66,8 +66,7 @@ class DatabaseService {
     ''');
   }
 
-  // Deck operations
-  Future<int> createDeck(Deck deck) async {
+    Future<int> createDeck(Deck deck) async {
     final db = await database;
     return await db.insert('decks', {
       'name': deck.name,
@@ -130,8 +129,7 @@ class DatabaseService {
     return await db.delete('decks', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Favorites operations
-  Future<int> addFavorite(YugiohCard card) async {
+    Future<int> addFavorite(YugiohCard card) async {
     final db = await database;
     return await db.insert('favorites', {
       'cardId': card.id,
@@ -165,8 +163,7 @@ class DatabaseService {
     return result.isNotEmpty;
   }
 
-  // Match history operations
-  Future<int> addMatchHistory(MatchHistory match) async {
+    Future<int> addMatchHistory(MatchHistory match) async {
     final db = await database;
     return await db.insert('match_history', match.toMap());
   }

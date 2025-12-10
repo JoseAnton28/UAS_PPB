@@ -6,8 +6,7 @@ import 'providers/auth_provider.dart';
 import 'providers/card_provider.dart';
 import 'providers/deck_provider.dart';
 import 'providers/duel_provider.dart';
-import 'providers/banlist_provider.dart'; // TAMBAHAN
-import 'providers/pack_provider.dart';
+import 'providers/banlist_provider.dart'; import 'providers/pack_provider.dart';
 import 'services/supabase_service.dart';
 
 void main() async {
@@ -25,8 +24,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => DeckProvider()),
         ChangeNotifierProvider(create: (_) => DuelProvider()),
         ChangeNotifierProvider(create: (_) => BanlistProvider()),
-        ChangeNotifierProvider(create: (_) => PackProvider())// TAMBAHAN BARU
-      ],
+        ChangeNotifierProvider(create: (_) => PackProvider())      ],
       child: const MyApp(),
     ),
   );

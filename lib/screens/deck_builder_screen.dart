@@ -24,8 +24,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
   void initState() {
     super.initState();
 
-    // 🔥 Paksa Landscape saat masuk Deck Builder
-    SystemChrome.setPreferredOrientations([
+        SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
@@ -166,8 +165,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
                             padding: const EdgeInsets.all(6),
                             physics: const BouncingScrollPhysics(),
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4, // 🔥 muat banyak kartu
-                              crossAxisSpacing: 6,
+                              crossAxisCount: 4,                               crossAxisSpacing: 6,
                               mainAxisSpacing: 6,
                               childAspectRatio: 0.72,
                             ),
@@ -281,8 +279,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
           ],
         ),
 
-        // 🔥 Tidak vertikal & auto "..."
-        title: Row(
+                title: Row(
           children: [
             Expanded(
               child: Text(
@@ -505,8 +502,7 @@ class _DeckBuilderScreenState extends State<DeckBuilderScreen>
 
   @override
   void dispose() {
-    // 🔥 Kembalikan portrait saat keluar dari deck builder
-    SystemChrome.setPreferredOrientations([
+        SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);

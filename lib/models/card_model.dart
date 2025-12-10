@@ -13,8 +13,7 @@ class YugiohCard {
   final List<CardImage> cardImages;
   final String? archetype;
   final Map<String, dynamic>? banlistInfo;
-  final List<CardSet>? cardSets; // TAMBAHAN BARU untuk pack filtering
-
+  final List<CardSet>? cardSets;
   YugiohCard({
     required this.id,
     required this.name,
@@ -28,8 +27,7 @@ class YugiohCard {
     required this.cardImages,
     this.archetype,
     this.banlistInfo,
-    this.cardSets, // TAMBAHAN BARU
-  });
+    this.cardSets,   });
 
   factory YugiohCard.fromJson(Map<String, dynamic> json) {
     return YugiohCard(
@@ -47,8 +45,7 @@ class YugiohCard {
           .toList(),
       archetype: json['archetype'],
       banlistInfo: json['banlist_info'] as Map<String, dynamic>?,
-      // TAMBAHAN BARU: Parse card_sets
-      cardSets: json['card_sets'] != null
+            cardSets: json['card_sets'] != null
           ? (json['card_sets'] as List)
           .map((set) => CardSet.fromJson(set))
           .toList()
@@ -74,8 +71,7 @@ class YugiohCard {
         'image_url_small': img.imageUrlSmall,
       }).toList(),
       'banlist_info': banlistInfo,
-      // TAMBAHAN BARU: Include card_sets
-      'card_sets': cardSets?.map((set) => set.toJson()).toList(),
+            'card_sets': cardSets?.map((set) => set.toJson()).toList(),
     };
   }
 
@@ -103,7 +99,6 @@ class CardImage {
   }
 }
 
-// TAMBAHAN BARU: Model untuk card set
 class CardSet {
   final String setName;
   final String setCode;

@@ -6,8 +6,7 @@ import 'deck_list_screen.dart';
 import 'duel_simulator_screen.dart';
 import 'match_history_screen.dart';
 import 'banlist_screen.dart';
-import 'pack_opening_screen.dart'; // TAMBAHAN BARU
-import 'login_screen.dart';
+import 'pack_opening_screen.dart'; import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -177,8 +176,7 @@ class _HomeScreenState extends State<HomeScreen>
                 MaterialPageRoute(builder: (_) => const BanlistScreen()),
               ),
             ),
-            // TAMBAHAN BARU: Pack Opening
-            _buildMenuCard(
+                        _buildMenuCard(
               index: 5,
               title: 'Pack Opening',
               icon: Icons.card_giftcard,

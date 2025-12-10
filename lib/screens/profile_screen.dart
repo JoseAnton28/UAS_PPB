@@ -43,8 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Avatar
-            CircleAvatar(
+                        CircleAvatar(
               radius: 60,
               backgroundColor: Colors.purple,
               child: Text(
@@ -54,8 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Display Name
-            Text(
+                        Text(
               _profile!['display_name'] ?? 'Unknown',
               style: const TextStyle(
                 fontSize: 24,
@@ -64,8 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Stats Cards
-            Row(
+                        Row(
               children: [
                 Expanded(
                   child: _buildStatCard(
@@ -110,8 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Win Rate
-            Card(
+                        Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(

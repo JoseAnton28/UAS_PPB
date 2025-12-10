@@ -36,8 +36,7 @@ class ApiService {
     }
   }
 
-  // BARU: Banlist TCG & OCG
-  static Future<List<YugiohCard>> getBanlistCards(String format) async {
+    static Future<List<YugiohCard>> getBanlistCards(String format) async {
     if (!['tcg', 'ocg'].contains(format.toLowerCase())) {
       throw Exception('Format harus tcg atau ocg');
     }

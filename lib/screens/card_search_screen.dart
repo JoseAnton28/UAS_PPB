@@ -73,8 +73,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
       ),
       body: Consumer<CardProvider>(
         builder: (context, provider, child) {
-          // Loading pertama kali
-          if (!_isInitialized && provider.isLoading) {
+                    if (!_isInitialized && provider.isLoading) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -87,8 +86,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
             );
           }
 
-          // Error
-          if (provider.errorMessage.isNotEmpty) {
+                    if (provider.errorMessage.isNotEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -111,8 +109,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
             );
           }
 
-          // Tidak ada hasil
-          if (provider.searchResults.isEmpty) {
+                    if (provider.searchResults.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -125,8 +122,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
             );
           }
 
-          // Tampilkan grid kartu
-          return GridView.builder(
+                    return GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -164,8 +160,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Gambar kartu
-            Expanded(
+                        Expanded(
               flex: 7,
               child: CachedNetworkImage(
                 imageUrl: card.smallImageUrl,
@@ -182,8 +177,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                 ),
               ),
             ),
-            // Nama kartu
-            Expanded(
+                        Expanded(
               flex: 2,
               child: Container(
                 padding: const EdgeInsets.all(6),
