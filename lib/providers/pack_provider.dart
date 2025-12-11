@@ -19,7 +19,7 @@ class PackProvider extends ChangeNotifier {
       name: 'Crossover Breakers',
       code: 'CROB',
       releaseDate: DateTime(2024, 12, 7),
-      imageUrl: 'https://images.ygoprodeck.com/images/sets/CROB.jpg',
+      imageUrl: 'https://static.wikia.nocookie.net/yugioh/images/1/1c/DBCB-BoosterAE.png/revision/latest?cb=20250308013256',
       cardsPerPack: 5,
     ),
     PackSet(
@@ -35,7 +35,7 @@ class PackProvider extends ChangeNotifier {
       name: 'Terminal World',
       code: 'TEWL',
       releaseDate: DateTime(2024, 8, 3),
-      imageUrl: 'https://images.ygoprodeck.com/images/sets/TEWL.jpg',
+      imageUrl: 'https://static.wikia.nocookie.net/yugioh/images/5/5e/TW01-BoosterJP.png/revision/latest?cb=20231012132418',
       cardsPerPack: 5,
     ),
     PackSet(
