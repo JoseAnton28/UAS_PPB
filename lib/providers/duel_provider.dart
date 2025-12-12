@@ -11,7 +11,7 @@ class DuelProvider extends ChangeNotifier {
   String _player2Name = 'Player 2';
 
   Timer? _timer;
-  int _elapsedSeconds = 0;
+  int _remainingSeconds = 3000; // === 50 menit ===
   bool _isTimerRunning = false;
 
   List<MatchHistory> _matchHistory = [];
@@ -21,14 +21,15 @@ class DuelProvider extends ChangeNotifier {
   int get player2LP => _player2LP;
   String get player1Name => _player1Name;
   String get player2Name => _player2Name;
-  int get elapsedSeconds => _elapsedSeconds;
+  int get remainingSeconds => _remainingSeconds;
   bool get isTimerRunning => _isTimerRunning;
   List<MatchHistory> get matchHistory => _matchHistory;
   String get errorMessage => _errorMessage;
 
+  // Tampilkan mm:ss
   String get timerDisplay {
-    final minutes = (_elapsedSeconds ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_elapsedSeconds % 60).toString().padLeft(2, '0');
+    final minutes = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
@@ -59,17 +60,25 @@ class DuelProvider extends ChangeNotifier {
   void resetDuel() {
     _player1LP = 8000;
     _player2LP = 8000;
-    stopTimer();
-    _elapsedSeconds = 0;
+    resetTimer();
     notifyListeners();
   }
 
+  // -------------------------
+  // COUNTDOWN TIMER 50 MIN
+  // -------------------------
+
   void startTimer() {
     if (_isTimerRunning) return;
+    if (_remainingSeconds <= 0) return; // Tidak jalan kalau sudah habis
 
     _isTimerRunning = true;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _elapsedSeconds++;
+      if (_remainingSeconds > 0) {
+        _remainingSeconds--;
+      } else {
+        stopTimer(); // otomatis berhenti jika waktu habis
+      }
       notifyListeners();
     });
   }
@@ -82,9 +91,11 @@ class DuelProvider extends ChangeNotifier {
 
   void resetTimer() {
     stopTimer();
-    _elapsedSeconds = 0;
+    _remainingSeconds = 3000; // kembali ke 50 menit
     notifyListeners();
   }
+
+  // ----------------------------------------------------
 
   int rollDice(int sides) {
     final random = Random();
@@ -112,7 +123,7 @@ class DuelProvider extends ChangeNotifier {
         player2LP: _player2LP,
         winner: winner,
         matchDate: DateTime.now(),
-        durationMinutes: _elapsedSeconds ~/ 60,
+        durationMinutes: (3000 - _remainingSeconds) ~/ 60,
       );
 
       await SupabaseService.instance.addMatchHistory(match);
