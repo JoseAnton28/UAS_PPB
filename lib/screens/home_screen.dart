@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Yu-Gi-Oh! Companion'),
+        title: const Text('Duel Mate'),
         centerTitle: true,
         elevation: 2,
         actions: [
